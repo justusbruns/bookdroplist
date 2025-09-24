@@ -59,22 +59,6 @@ export default function MinimalMap({
   const [fullAddress, setFullAddress] = useState<string>('')
   const [loadingAddress, setLoadingAddress] = useState(false)
 
-  if (!latitude || !longitude) {
-    return null
-  }
-
-  if (!googleMapsApiKey) {
-    console.error('Google Maps API key is missing.')
-    // Render a disabled state or return null if the key is missing
-    return (
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <div className="relative w-full h-48 border border-gray-200 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
-          <p className="text-gray-500 text-sm">Map requires configuration.</p>
-        </div>
-      </div>
-    )
-  }
-
   const isMiniLibrary = purpose === 'minilibrary'
   const requiresPrivacy = purpose === 'pickup' || purpose === 'buying' || purpose === 'borrowing'
 
@@ -89,7 +73,7 @@ export default function MinimalMap({
 
   // For mini libraries, fetch the full address using reverse geocoding
   useEffect(() => {
-    if (isMiniLibrary && exactLatitude && exactLongitude && !fullAddress) {
+    if (isMiniLibrary && exactLatitude && exactLongitude && !fullAddress && googleMapsApiKey) {
       setLoadingAddress(true)
 
       const fetchAddress = async () => {
@@ -114,6 +98,22 @@ export default function MinimalMap({
       fetchAddress()
     }
   }, [isMiniLibrary, exactLatitude, exactLongitude, googleMapsApiKey, fullAddress])
+
+  if (!latitude || !longitude) {
+    return null
+  }
+
+  if (!googleMapsApiKey) {
+    console.error('Google Maps API key is missing.')
+    // Render a disabled state or return null if the key is missing
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div className="relative w-full h-48 border border-gray-200 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+          <p className="text-gray-500 text-sm">Map requires configuration.</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mb-8">
