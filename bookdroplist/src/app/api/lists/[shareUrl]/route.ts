@@ -26,10 +26,14 @@ export async function GET(
     }
 
     // Get books for this list using admin client to bypass RLS
+    if (!supabaseAdmin) {
+      return NextResponse.json({ error: 'Service not properly configured' }, { status: 500 })
+    }
+
     const { data: listBookLinks, error: listBooksError } = await supabaseAdmin
       .from('list_books')
       .select('book_id, position')
-      .eq('list_id', list.id)
+      .eq('list_id', (list as any).id)
       .order('position')
 
     if (listBooksError) {
@@ -37,12 +41,12 @@ export async function GET(
       return NextResponse.json({ error: 'Failed to fetch book links' }, { status: 500 })
     }
 
-    const bookIds = listBookLinks.map(link => link.book_id)
+    const bookIds = (listBookLinks as any[]).map(link => link.book_id)
     let books: any[] = []
 
     if (bookIds.length > 0) {
       // Get book details for the collected IDs, also using admin client
-      const { data: bookDetails, error: booksError } = await supabaseAdmin
+      const { data: bookDetails, error: booksError } = await supabaseAdmin!
         .from('books')
         .select('*')
         .in('id', bookIds)
@@ -53,10 +57,10 @@ export async function GET(
       }
 
       // Create a map for quick lookups
-      const bookMap = new Map(bookDetails.map(book => [book.id, book]))
+      const bookMap = new Map((bookDetails as any[]).map(book => [book.id, book]))
 
       // Reconstruct the books array in the correct order
-      books = listBookLinks
+      books = (listBookLinks as any[])
         .map(link => bookMap.get(link.book_id))
         .filter(Boolean) as any[] // Filter out any potential misses
     }
