@@ -59,7 +59,7 @@ export default function MiniLibraryUpdate({
             .filter((change: BookChange) => change.confidence > 0.8)
             .map((change: BookChange) => `${change.action}-${change.book.id}`)
         )
-        setSelectedChanges(highConfidenceChanges)
+        setSelectedChanges(highConfidenceChanges as Set<string>)
 
         setStep('confirm')
       } else {

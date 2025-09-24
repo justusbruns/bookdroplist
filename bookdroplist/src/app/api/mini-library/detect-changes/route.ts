@@ -25,9 +25,9 @@ function calculateBookSimilarity(book1: any, book2: Book): number {
   if (titleMatch || authorMatch) return 0.7
 
   // Check for partial matches
-  const titleWords1 = title1.split(' ').filter(w => w.length > 2)
-  const titleWords2 = title2.split(' ').filter(w => w.length > 2)
-  const titleWordMatches = titleWords1.filter(w => titleWords2.includes(w)).length
+  const titleWords1 = title1.split(' ').filter((w: string) => w.length > 2)
+  const titleWords2 = title2.split(' ').filter((w: string) => w.length > 2)
+  const titleWordMatches = titleWords1.filter((w: string) => titleWords2.includes(w)).length
   const titleSimilarity = titleWordMatches / Math.max(titleWords1.length, titleWords2.length)
 
   if (titleSimilarity > 0.5) return titleSimilarity * 0.8
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
 
     // Find books to add (detected in image but not in current list)
     for (const detectedBook of detectedBooks) {
-      const bestMatch = currentBooks.reduce((best, currentBook) => {
+      const bestMatch = currentBooks.reduce((best: { book: any, similarity: number }, currentBook) => {
         const similarity = calculateBookSimilarity(detectedBook, currentBook)
         return similarity > best.similarity ? { book: currentBook, similarity } : best
       }, { book: null, similarity: 0 })
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
 
     // Find books to remove (in current list but not detected in image)
     for (const currentBook of currentBooks) {
-      const bestMatch = detectedBooks.reduce((best, detectedBook) => {
+      const bestMatch = detectedBooks.reduce((best: { book: any, similarity: number }, detectedBook) => {
         const similarity = calculateBookSimilarity(detectedBook, currentBook)
         return similarity > best.similarity ? { book: detectedBook, similarity } : best
       }, { book: null, similarity: 0 })

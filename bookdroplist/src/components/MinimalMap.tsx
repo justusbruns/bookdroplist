@@ -67,7 +67,7 @@ export default function MinimalMap({
   const displayLat = isMiniLibrary && exactLatitude ? exactLatitude : latitude
   const displayLng = isMiniLibrary && exactLongitude ? exactLongitude : longitude
 
-  const mapCenter = { lat: displayLat, lng: displayLng }
+  const mapCenter = { lat: displayLat || 0, lng: displayLng || 0 }
 
   const areaName = city || 'Location Area'
 
