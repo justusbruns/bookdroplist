@@ -8,7 +8,7 @@ import LocationCapture from '@/components/LocationCapture'
 import AddBooksToList from '@/components/AddBooksToList'
 import EditListName from '@/components/EditListName'
 import ListPurposeSelector from '@/components/ListPurposeSelector'
-import type { BookList, ListPurpose } from '@/types'
+import type { BookList, ListPurpose, Book } from '@/types'
 
 export default function EditListPage() {
   const params = useParams()
@@ -72,7 +72,7 @@ export default function EditListPage() {
     }
   }
 
-  const handleBooksUpdate = async (updatedBooks: any[]) => {
+  const handleBooksUpdate = async (updatedBooks: Book[]) => {
     if (!bookList) return
 
     setSaving(true)
@@ -86,7 +86,9 @@ export default function EditListPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update books')
+        const errorData = await response.json().catch(() => ({}))
+        const errorMessage = errorData.error || `Failed to update books (${response.status})`
+        throw new Error(errorMessage)
       }
 
       setBookList(prev => prev ? { ...prev, books: updatedBooks } : null)
@@ -157,7 +159,7 @@ export default function EditListPage() {
     }
   }
 
-  const handleBooksAdded = (newBooks: any[]) => {
+  const handleBooksAdded = (newBooks: Book[]) => {
     setBookList(prev => prev ? {
       ...prev,
       books: [...prev.books, ...newBooks]
@@ -178,13 +180,18 @@ export default function EditListPage() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update list purpose')
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to update list purpose')
       }
 
       setBookList(prev => prev ? { ...prev, purpose } : null)
     } catch (err) {
       console.error('Error updating list purpose:', err)
-      alert('Failed to update list purpose')
+      if (err instanceof Error && err.message.includes('constraint')) {
+        alert('This purpose option is currently not available. Please try a different purpose.')
+      } else {
+        alert('Failed to update list purpose')
+      }
     }
   }
 
@@ -236,26 +243,30 @@ export default function EditListPage() {
               onNameUpdate={handleNameChange}
             />
           ) : (
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{bookList.name}</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{bookList.name}</h1>
           )}
-          <p className="text-gray-600 mt-2">
-            {bookList.books.length} {bookList.books.length === 1 ? 'book' : 'books'}
-          </p>
+          <div className="flex items-center justify-center gap-2 mt-2">
+            <p className="text-gray-600">
+              {bookList.books.length} {bookList.books.length === 1 ? 'book' : 'books'}
+            </p>
+            {bookList.isManager && (
+              <>
+                <span className="text-gray-400">|</span>
+                <ListPurposeSelector
+                  initialPurpose={bookList.purpose || 'sharing'}
+                  onPurposeChange={handlePurposeChange}
+                  onLocationRequiredChange={setLocationRequired}
+                  dropdown={true}
+                />
+              </>
+            )}
+          </div>
           {!bookList.isManager && bookList.purpose === 'minilibrary' && (
             <p className="text-sm text-emerald-600 mt-1">
               📚 Community-managed mini library
             </p>
           )}
         </div>
-
-        {/* Purpose Selection - Only for managers */}
-        {bookList.isManager && (
-          <ListPurposeSelector
-            initialPurpose={bookList.purpose || 'sharing'}
-            onPurposeChange={handlePurposeChange}
-            onLocationRequiredChange={setLocationRequired}
-          />
-        )}
 
         {/* Location Section - Only show when required or already exists, and only editable by managers */}
         {bookList.isManager && (
@@ -366,7 +377,6 @@ export default function EditListPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <AddBooksToList
-              listId={bookList.id}
               shareUrl={shareUrl}
               onCancel={() => setShowAddBooks(false)}
               onBooksAdded={handleBooksAdded}

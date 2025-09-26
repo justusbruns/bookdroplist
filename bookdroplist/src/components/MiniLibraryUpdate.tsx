@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useDropzone } from 'react-dropzone'
+import Image from 'next/image'
 import type { Book } from '@/types'
 
 interface MiniLibraryUpdateProps {
@@ -179,10 +180,13 @@ export default function MiniLibraryUpdate({
         </p>
 
         {uploadedImage && (
-          <img
+          <Image
             src={uploadedImage}
             alt="Uploaded Little Free Library photo"
             className="max-h-48 mx-auto rounded-lg shadow-md mb-6"
+            width={400}
+            height={192}
+            style={{ height: 'auto' }}
           />
         )}
 
@@ -227,10 +231,13 @@ export default function MiniLibraryUpdate({
         </p>
 
         {uploadedImage && (
-          <img
+          <Image
             src={uploadedImage}
             alt="Uploaded Little Free Library photo"
             className="max-h-32 mx-auto rounded-lg shadow-md mb-6"
+            width={400}
+            height={128}
+            style={{ height: 'auto' }}
           />
         )}
 

@@ -41,3 +41,109 @@ body {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
+
+/* Container to enable 3D perspective */
+.book-perspective {
+  perspective: 1000px; /* Sets the 3D viewing space */
+}
+
+/* The core CSS for the realistic book effect */
+.realistic-book-cover {
+  /* 1. Base Dimensions and Positioning */
+  width: 100%;
+  height: auto;
+  position: relative;
+  overflow: hidden; /* Ensures shadows and transforms stay clean */
+
+  /* 2. Border radius for book edges */
+  border-radius: 2px 5px 5px 2px; /* Subtle rounding for the spine and edges */
+
+  /* 3. 3D Perspective and Transform */
+  transform: rotateY(-3deg) rotateX(0deg) rotateZ(1deg); /* Slight turn and tilt */
+  transform-style: preserve-3d;
+  transition: transform 0.3s ease; /* Smooth hover effect */
+
+  /* 4. Core Shadows (The magic sauce for depth) */
+  box-shadow:
+    /* Shadow 1: The thick right edge (The 'hard cover' depth) */
+    4px 0 10px rgba(0, 0, 0, 0.4),
+    /* Shadow 2: The lift-off-the-shelf bottom shadow (Makes it float) */
+    0 15px 30px rgba(0, 0, 0, 0.5),
+    /* Shadow 3: Subtle inner shadow for cover curvature (Glaze/hardness) */
+    inset 0 0 10px rgba(255, 255, 255, 0.05);
+
+  z-index: 10;
+}
+
+/* 5. Spine Crease/Shadow (Using ::before pseudo-element) */
+.realistic-book-cover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px; /* The width of the spine crease */
+  height: 100%;
+  /* Gradient to mimic the deep shadow where the cover meets the pages */
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0) 100%);
+  z-index: 20;
+  border-radius: 2px 0 0 2px;
+}
+
+/* 6. Optional Hover Effect for Interaction */
+.realistic-book-cover:hover {
+  transform: rotateY(0deg) rotateX(0deg) rotateZ(0deg) scale(1.05);
+  box-shadow:
+    /* Softer shadows on hover */
+    6px 6px 35px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Custom CSS for the 'Add Book' card/button */
+.add-book-card {
+  /* Appearance: Solid green with white content */
+  background-color: #4CAF50; /* Solid Green */
+  color: white; /* White icon */
+  border: 2px solid #388e3c; /* Darker green solid border */
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+
+  /* Center content (Icon only) */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  /* Visual Effect */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease-in-out;
+  outline: none;
+  user-select: none;
+
+  /* Apply realistic book transform and shadows */
+  transform: rotateY(-3deg) rotateX(0deg) rotateZ(1deg);
+  transform-style: preserve-3d;
+}
+
+.add-book-card .plus-icon {
+  /* Plus is large */
+  font-size: 80px;
+  line-height: 1;
+}
+
+/* Hover State: Green glow effect */
+.add-book-card:hover {
+  background-color: #5cb860; /* Slightly lighter green on hover */
+  border-color: #5cb860;
+  box-shadow: 0 0 20px rgba(76, 175, 80, 0.6), 0 0 40px rgba(76, 175, 80, 0.4); /* Green glow */
+  transform: rotateY(0deg) rotateX(0deg) rotateZ(0deg) translateY(-2px); /* Slight lift */
+}
+
+/* Active State: Gives a satisfying press feedback */
+.add-book-card:active {
+  background-color: #388e3c; /* Darker green press color */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transform: rotateY(-3deg) rotateX(0deg) rotateZ(1deg) translateY(0); /* Pushes back down */
+}

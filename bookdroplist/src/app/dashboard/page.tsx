@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -30,11 +30,7 @@ export default function Dashboard() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<{ shareUrl: string; listId: string; listName: string } | null>(null)
   const router = useRouter()
 
-  useEffect(() => {
-    loadDashboardData()
-  }, [])
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -72,7 +68,11 @@ export default function Dashboard() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    loadDashboardData()
+  }, [loadDashboardData])
 
   const handleDeleteList = (shareUrl: string, listId: string, listName: string) => {
     setShowDeleteConfirm({ shareUrl, listId, listName })

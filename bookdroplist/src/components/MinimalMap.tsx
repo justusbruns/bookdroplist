@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { APIProvider, Map, AdvancedMarker, useMap, useMapsLibrary } from '@vis.gl/react-google-maps'
+import { APIProvider, Map, AdvancedMarker, useMap } from '@vis.gl/react-google-maps'
 
 const containerStyle = {
   width: '100%',
@@ -50,9 +50,7 @@ export default function MinimalMap({
   longitude,
   exactLatitude,
   exactLongitude,
-  locationName,
   city,
-  country,
   purpose
 }: MinimalMapProps) {
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY

@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { requireAuth } from '@/lib/session'
-import type { Book } from '@/types'
+
+interface List {
+  id: string;
+  purpose: string;
+}
+
+interface CurrentBook {
+  position: number;
+}
 
 export async function POST(request: NextRequest) {
   try {
     // Require authentication
-    let session
     try {
-      session = await requireAuth()
-    } catch (error) {
+      await requireAuth()
+    } catch {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
@@ -54,14 +61,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify this is a mini library
-    if ((list as any).purpose !== 'minilibrary') {
+    if ((list as List).purpose !== 'minilibrary') {
       return NextResponse.json({ error: 'This feature is only available for mini libraries' }, { status: 400 })
     }
 
     // For mini libraries, any authenticated user can edit (community managed)
     // This is different from other list types which require ownership
 
-    const listIdToUse = (list as any).id
+    const listIdToUse = (list as List).id
 
     // Remove books first
     if (booksToRemove && booksToRemove.length > 0) {
@@ -100,24 +107,14 @@ export async function POST(request: NextRequest) {
 
       let nextPosition = 1
       if (currentBooks && currentBooks.length > 0) {
-        nextPosition = (currentBooks[0] as any).position + 1
+        nextPosition = (currentBooks[0] as CurrentBook).position + 1
       }
 
       for (const book of booksToAdd) {
         // Insert book into books table
-        const { error: bookError } = await supabase!
+        const { error: bookError } = await (supabase as any)!
           .from('books')
-          .insert({
-            id: book.id,
-            title: book.title,
-            author: book.author,
-            cover_url: book.cover_url,
-            isbn: book.isbn,
-            publication_year: book.publication_year,
-            publisher: book.publisher,
-            description: book.description,
-            genre: book.genre
-          } as any)
+          .insert(book)
 
         if (bookError && bookError.code !== '23505') { // Ignore duplicate key errors
           console.error('Error inserting book:', bookError)
@@ -125,13 +122,13 @@ export async function POST(request: NextRequest) {
         }
 
         // Insert into list_books
-        const { error: listBookError } = await supabase!
+        const { error: listBookError } = await (supabase as any)!
           .from('list_books')
           .insert({
             list_id: listIdToUse,
             book_id: book.id,
             position: nextPosition
-          } as any)
+          })
 
         if (listBookError) {
           console.error('Error adding book to list:', listBookError)

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     let session
     try {
       session = await requireAuth()
-    } catch (error) {
+    } catch {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 

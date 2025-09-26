@@ -1,7 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import ImageUpload from '@/components/ImageUpload'
+import GeneratedBookCover from './GeneratedBookCover'
 
 interface Book {
   id: string
@@ -15,13 +17,12 @@ interface Book {
 }
 
 interface AddBooksToListProps {
-  listId: string
   shareUrl: string
   onCancel: () => void
   onBooksAdded: (newBooks: Book[]) => void
 }
 
-export default function AddBooksToList({ listId, shareUrl, onCancel, onBooksAdded }: AddBooksToListProps) {
+export default function AddBooksToList({ shareUrl, onCancel, onBooksAdded }: AddBooksToListProps) {
   const [addMethod, setAddMethod] = useState<'choose' | 'photo' | 'search'>('choose')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Book[]>([])
@@ -317,13 +318,21 @@ export default function AddBooksToList({ listId, shareUrl, onCancel, onBooksAdde
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {searchResults.map((book) => (
               <div key={book.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-md hover:bg-gray-50">
-                {book.cover_url && (
-                  <img
-                    src={book.cover_url}
-                    alt={book.title}
-                    className="w-12 h-16 object-cover rounded"
-                  />
-                )}
+                <div className="flex-shrink-0 w-12 h-16">
+                  {book.cover_url ? (
+                    <Image
+                      src={book.cover_url}
+                      alt={book.title}
+                      className="w-full h-full object-cover rounded"
+                      width={48}
+                      height={64}
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded overflow-hidden">
+                      <GeneratedBookCover book={book} />
+                    </div>
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
                     {book.title}
@@ -359,13 +368,21 @@ export default function AddBooksToList({ listId, shareUrl, onCancel, onBooksAdde
           <div className="space-y-2">
             {selectedBooks.map((book) => (
               <div key={book.id} className="flex items-center space-x-3 p-3 bg-green-50 border border-green-200 rounded-md">
-                {book.cover_url && (
-                  <img
-                    src={book.cover_url}
-                    alt={book.title}
-                    className="w-10 h-14 object-cover rounded"
-                  />
-                )}
+                <div className="flex-shrink-0 w-10 h-14">
+                  {book.cover_url ? (
+                    <Image
+                      src={book.cover_url}
+                      alt={book.title}
+                      className="w-full h-full object-cover rounded"
+                      width={48}
+                      height={64}
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded overflow-hidden">
+                      <GeneratedBookCover book={book} />
+                    </div>
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
                     {book.title}

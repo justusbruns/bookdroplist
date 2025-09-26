@@ -5,8 +5,6 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import BookGrid from '@/components/BookGrid'
 import ShareButton from '@/components/ShareButton'
-import EditListName from '@/components/EditListName'
-import LocationDisplay from '@/components/LocationDisplay'
 import FavoriteButton from '@/components/FavoriteButton'
 import PurposeDisplay from '@/components/PurposeDisplay'
 import MinimalMap from '@/components/MinimalMap'
@@ -39,26 +37,6 @@ export default function ListPage() {
     fetchList()
   }, [fetchList])
 
-  const handleNameUpdate = async (newName: string) => {
-    try {
-      const response = await fetch(`/api/lists/${shareUrl}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: newName }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to update list name')
-      }
-
-      const updatedList = await response.json()
-      setBookList(prev => prev ? { ...prev, name: updatedList.name } : null)
-    } catch (err) {
-      console.error('Error updating list name:', err)
-    }
-  }
 
 
   if (loading) {
@@ -115,7 +93,7 @@ export default function ListPage() {
         <LastUpdated updatedAt={bookList.updated_at} purpose={bookList.purpose} />
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-          <ShareButton shareUrl={shareUrl} listName={bookList.name} />
+          <ShareButton shareUrl={shareUrl} />
           <FavoriteButton listId={bookList.id} isOwner={bookList.isOwner || false} />
         </div>
 

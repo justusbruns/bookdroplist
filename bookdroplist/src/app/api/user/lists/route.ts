@@ -27,7 +27,7 @@ export async function GET() {
     }
 
     // Transform the data to include book count
-    const transformedLists = lists?.map((list: any) => ({
+    const transformedLists = lists?.map((list: { list_books: { count: number }[] }) => ({
       ...list,
       book_count: list.list_books?.[0]?.count || 0
     })) || []

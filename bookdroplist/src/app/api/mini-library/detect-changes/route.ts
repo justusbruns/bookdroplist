@@ -11,7 +11,7 @@ interface BookChange {
   confidence: number
 }
 
-function calculateBookSimilarity(book1: any, book2: Book): number {
+function calculateBookSimilarity(book1: Book, book2: Book): number {
   const title1 = book1.title.toLowerCase().trim()
   const title2 = book2.title.toLowerCase().trim()
   const author1 = book1.author.toLowerCase().trim()
@@ -38,16 +38,14 @@ function calculateBookSimilarity(book1: any, book2: Book): number {
 export async function POST(request: NextRequest) {
   try {
     // Require authentication
-    let session
     try {
-      session = await requireAuth()
-    } catch (error) {
+      await requireAuth()
+    } catch {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
     const formData = await request.formData()
     const file = formData.get('image') as File
-    const listId = formData.get('listId') as string
     const currentBooksData = formData.get('currentBooks') as string
 
     if (!file) {
@@ -88,7 +86,7 @@ export async function POST(request: NextRequest) {
 
     // Find books to add (detected in image but not in current list)
     for (const detectedBook of detectedBooks) {
-      const bestMatch = currentBooks.reduce((best: { book: any, similarity: number }, currentBook) => {
+      const bestMatch = currentBooks.reduce((best: { book: Book | null, similarity: number }, currentBook) => {
         const similarity = calculateBookSimilarity(detectedBook, currentBook)
         return similarity > best.similarity ? { book: currentBook, similarity } : best
       }, { book: null, similarity: 0 })
@@ -105,7 +103,7 @@ export async function POST(request: NextRequest) {
 
     // Find books to remove (in current list but not detected in image)
     for (const currentBook of currentBooks) {
-      const bestMatch = detectedBooks.reduce((best: { book: any, similarity: number }, detectedBook) => {
+      const bestMatch = detectedBooks.reduce((best: { book: Book | null, similarity: number }, detectedBook) => {
         const similarity = calculateBookSimilarity(detectedBook, currentBook)
         return similarity > best.similarity ? { book: detectedBook, similarity } : best
       }, { book: null, similarity: 0 })

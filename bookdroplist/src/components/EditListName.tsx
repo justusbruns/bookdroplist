@@ -63,12 +63,12 @@ export default function EditListName({ initialName, onNameUpdate }: EditListName
   return (
     <button
       onClick={() => setIsEditing(true)}
-      className="group inline-flex items-center gap-2 text-3xl md:text-4xl font-bold text-gray-900 hover:text-blue-600 transition-colors"
+      className="group inline-flex items-center gap-2 text-3xl md:text-4xl font-bold text-gray-900 hover:text-blue-600 transition-colors px-3 py-1 rounded-md hover:bg-blue-50 border border-transparent hover:border-blue-200 mb-2"
       title="Click to edit list name"
     >
       {name}
       <svg
-        className="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity"
+        className="w-6 h-6 opacity-30 group-hover:opacity-100 transition-opacity"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"

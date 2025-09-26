@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import ImageUpload from '@/components/ImageUpload'
 import ProcessingState from '@/components/ProcessingState'
 import LocationCapture from '@/components/LocationCapture'
@@ -21,6 +22,7 @@ export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [showManualEntry, setShowManualEntry] = useState(false)
+  const [showImageUpload, setShowImageUpload] = useState(false)
   const router = useRouter()
 
   // Check if user is already authenticated
@@ -47,6 +49,7 @@ export default function Home() {
 
   const handleImageUpload = (file: File) => {
     setUploadedImage(file)
+    setShowImageUpload(false)
     setError(null)
   }
 
@@ -115,10 +118,13 @@ export default function Home() {
 
         <div className="text-center mb-12">
           <div className="mb-6">
-            <img
+            <Image
               src="/logo.svg"
               alt="Book Drop List Logo"
-              className="mx-auto w-24 h-auto"
+              className="mx-auto w-24"
+              width={96}
+              height={96}
+              style={{ height: 'auto' }}
             />
           </div>
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-4">
@@ -144,6 +150,19 @@ export default function Home() {
             <ProcessingState />
           ) : showManualEntry ? (
             <ManualBookEntry onCancel={() => setShowManualEntry(false)} />
+          ) : showImageUpload ? (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">Upload a photo of books</h2>
+                <button
+                  onClick={() => setShowImageUpload(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+              <ImageUpload onImageUpload={handleImageUpload} />
+            </div>
           ) : uploadedImage && !locationCaptured ? (
             <div className="space-y-6">
               <div className="bg-white rounded-lg p-6 shadow-md">
@@ -185,7 +204,7 @@ export default function Home() {
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Photo Upload Option */}
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-blue-500 transition-colors cursor-pointer group"
-                       onClick={() => document.getElementById('imageUpload')?.click()}>
+                       onClick={() => setShowImageUpload(true)}>
                     <div className="text-center">
                       <svg className="mx-auto h-12 w-12 text-gray-400 group-hover:text-blue-500 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                         <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -219,10 +238,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Hidden Image Upload Component */}
-              <div style={{ display: 'none' }}>
-                <ImageUpload onImageUpload={handleImageUpload} />
-              </div>
             </div>
           )}
 

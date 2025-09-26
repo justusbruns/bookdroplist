@@ -4,6 +4,7 @@ import type { ListPurpose } from '@/types'
 
 interface PurposeDisplayProps {
   purpose?: ListPurpose
+  inline?: boolean
 }
 
 const purposeLabels = {
@@ -33,7 +34,16 @@ const purposeColors = {
   minilibrary: 'bg-emerald-50 text-emerald-700 border-emerald-200'
 }
 
-export default function PurposeDisplay({ purpose = 'sharing' }: PurposeDisplayProps) {
+export default function PurposeDisplay({ purpose = 'sharing', inline = false }: PurposeDisplayProps) {
+  if (inline) {
+    return (
+      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${purposeColors[purpose]}`}>
+        <span className="text-sm">{purposeIcons[purpose]}</span>
+        <span>{purposeLabels[purpose]}</span>
+      </span>
+    )
+  }
+
   return (
     <div className="flex justify-center mb-6">
       <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium ${purposeColors[purpose]}`}>

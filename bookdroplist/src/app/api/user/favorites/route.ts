@@ -30,7 +30,7 @@ export async function GET() {
     }
 
     // Transform the data to include book count
-    const transformedFavorites = favorites?.map((favorite: any) => ({
+    const transformedFavorites = favorites?.map((favorite: { lists: { list_books: { count: number }[] } }) => ({
       ...favorite,
       lists: {
         ...favorite.lists,

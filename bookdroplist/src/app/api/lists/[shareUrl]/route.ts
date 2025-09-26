@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { getSession } from '@/lib/session'
+import type { Book } from '@/types'
+import { Tables } from '@/types/supabase'
 
 export async function GET(
   request: NextRequest,
@@ -19,7 +21,7 @@ export async function GET(
       .from('lists')
       .select('*')
       .eq('share_url', shareUrl)
-      .single()
+      .single<Tables<"lists">>()
 
     if (listError || !list) {
       return NextResponse.json({ error: 'List not found' }, { status: 404 })
@@ -33,16 +35,17 @@ export async function GET(
     const { data: listBookLinks, error: listBooksError } = await supabaseAdmin
       .from('list_books')
       .select('book_id, position')
-      .eq('list_id', (list as any).id)
+      .eq('list_id', list.id)
       .order('position')
+      .returns<Tables<"list_books">[]>()
 
     if (listBooksError) {
       console.error('Error fetching list_books:', listBooksError)
       return NextResponse.json({ error: 'Failed to fetch book links' }, { status: 500 })
     }
 
-    const bookIds = (listBookLinks as any[]).map(link => link.book_id)
-    let books: any[] = []
+    const bookIds = listBookLinks.map(link => link.book_id)
+    let books: Book[] = []
 
     if (bookIds.length > 0) {
       // Get book details for the collected IDs, also using admin client
@@ -57,32 +60,32 @@ export async function GET(
       }
 
       // Create a map for quick lookups
-      const bookMap = new Map((bookDetails as any[]).map(book => [book.id, book]))
+      const bookMap = new Map((bookDetails as Book[]).map(book => [book.id, book]))
 
       // Reconstruct the books array in the correct order
-      books = (listBookLinks as any[])
+      books = listBookLinks
         .map(link => bookMap.get(link.book_id))
-        .filter(Boolean) as any[] // Filter out any potential misses
+        .filter(Boolean) as Book[] // Filter out any potential misses
     }
 
     // Check if current user is the owner
-    const isOwner = session?.userId === (list as { user_id: string }).user_id
+    const isOwner = session?.userId === list.user_id
 
     // For mini libraries, any authenticated user can edit (community managed)
-    const canEdit = isOwner || ((list as { purpose?: string }).purpose === 'minilibrary' && !!session)
+    const canEdit = isOwner || (list.purpose === 'minilibrary' && !!session)
 
     // Show exact location only for mini libraries, hide for other purposes
-    const isMiniLibrary = (list as { purpose?: string }).purpose === 'minilibrary'
+    const isMiniLibrary = list.purpose === 'minilibrary'
 
     return NextResponse.json({
-      ...(list as object),
+      ...list,
       books,
       isOwner,
       canEdit,
       isManager: isOwner, // Only the owner is the manager who can change name/location
       // Show exact coordinates only for mini libraries
-      exact_latitude: isMiniLibrary ? (list as { exact_latitude?: number }).exact_latitude : undefined,
-      exact_longitude: isMiniLibrary ? (list as { exact_longitude?: number }).exact_longitude : undefined
+      exact_latitude: isMiniLibrary ? list.exact_latitude : undefined,
+      exact_longitude: isMiniLibrary ? list.exact_longitude : undefined
     })
 
   } catch (error) {
@@ -112,12 +115,11 @@ export async function PUT(
     }
 
     // First, verify the list exists and check permissions
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: existingList, error: findError } = await (supabase as any)
+    const { data: existingList, error: findError } = await (supabase)
       .from('lists')
       .select('id, user_id, purpose')
       .eq('share_url', shareUrl)
-      .single()
+      .single<Tables<"lists">>()
 
     console.log('Finding list:', { shareUrl, existingList, findError })
 
@@ -165,7 +167,6 @@ export async function PUT(
     if (name !== undefined) updateData.name = name
     if (purpose !== undefined) updateData.purpose = purpose
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabaseAdmin as any)
       .from('lists')
       .update(updateData)

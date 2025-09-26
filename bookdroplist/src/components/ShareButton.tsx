@@ -4,10 +4,9 @@ import { useState } from 'react'
 
 interface ShareButtonProps {
   shareUrl: string
-  listName: string
 }
 
-export default function ShareButton({ shareUrl, listName }: ShareButtonProps) {
+export default function ShareButton({ shareUrl }: ShareButtonProps) {
   const [copied, setCopied] = useState(false)
 
   const fullUrl = typeof window !== 'undefined' ? `${window.location.origin}/list/${shareUrl}` : ''
@@ -22,21 +21,6 @@ export default function ShareButton({ shareUrl, listName }: ShareButtonProps) {
     }
   }
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: listName,
-          text: `Check out this book list: ${listName}`,
-          url: fullUrl,
-        })
-      } catch (err) {
-        console.error('Error sharing:', err)
-      }
-    } else {
-      handleCopy()
-    }
-  }
 
   return (
     <div className="flex flex-col sm:flex-row items-center gap-4">

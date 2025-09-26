@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 interface FavoriteButtonProps {
   listId: string
@@ -12,11 +12,7 @@ export default function FavoriteButton({ listId, isOwner }: FavoriteButtonProps)
   const [isLoading, setIsLoading] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  useEffect(() => {
-    checkAuthAndFavoriteStatus()
-  }, [listId])
-
-  const checkAuthAndFavoriteStatus = async () => {
+  const checkAuthAndFavoriteStatus = useCallback(async () => {
     try {
       // Check if user is authenticated
       const profileResponse = await fetch('/api/user/profile')
@@ -31,13 +27,17 @@ export default function FavoriteButton({ listId, isOwner }: FavoriteButtonProps)
       const favoritesResponse = await fetch('/api/user/favorites')
       if (favoritesResponse.ok) {
         const data = await favoritesResponse.json()
-        const isFav = data.favorites?.some((fav: any) => fav.list_id === listId)
+        const isFav = data.favorites?.some((fav: { list_id: string }) => fav.list_id === listId)
         setIsFavorited(isFav)
       }
     } catch (error) {
       console.error('Error checking favorite status:', error)
     }
-  }
+  }, [listId])
+
+  useEffect(() => {
+    checkAuthAndFavoriteStatus()
+  }, [checkAuthAndFavoriteStatus])
 
   const toggleFavorite = async () => {
     if (!isAuthenticated || isOwner) return

@@ -9,7 +9,7 @@ export async function GET() {
       email: session.email,
       userId: session.userId
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
   }
 }

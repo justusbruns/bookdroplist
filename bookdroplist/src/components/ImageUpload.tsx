@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react'
 import { useDropzone } from 'react-dropzone'
+import Image from 'next/image'
 
 interface ImageUploadProps {
   onImageUpload: (file: File) => void
@@ -44,10 +45,13 @@ export default function ImageUpload({ onImageUpload }: ImageUploadProps) {
 
         {preview ? (
           <div className="space-y-4">
-            <img
+            <Image
               src={preview}
               alt="Preview"
               className="max-h-64 mx-auto rounded-lg shadow-md"
+              width={400}
+              height={300}
+              style={{ height: 'auto' }}
             />
             <p className="text-sm text-gray-600">
               Click or drag another image to replace

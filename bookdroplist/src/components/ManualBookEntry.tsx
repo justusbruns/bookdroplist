@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+import GeneratedBookCover from './GeneratedBookCover'
 
 interface Book {
   id: string
@@ -106,7 +108,7 @@ export default function ManualBookEntry({ onCancel }: ManualBookEntryProps) {
           if (errorData.error) {
             errorMsg = errorData.error
           }
-        } catch (e) {
+        } catch {
           // Response might not be JSON, proceed with default message
         }
 
@@ -190,13 +192,21 @@ export default function ManualBookEntry({ onCancel }: ManualBookEntryProps) {
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {searchResults.map((book) => (
               <div key={book.id} className="flex items-center space-x-3 p-3 border border-gray-200 rounded-md hover:bg-gray-50">
-                {book.cover_url && (
-                  <img
-                    src={book.cover_url}
-                    alt={book.title}
-                    className="w-12 h-16 object-cover rounded"
-                  />
-                )}
+                <div className="flex-shrink-0 w-12 h-16">
+                  {book.cover_url ? (
+                    <Image
+                      src={book.cover_url}
+                      alt={book.title}
+                      className="w-full h-full object-cover rounded"
+                      width={48}
+                      height={64}
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded overflow-hidden">
+                      <GeneratedBookCover book={book} />
+                    </div>
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
                     {book.title}
@@ -231,13 +241,21 @@ export default function ManualBookEntry({ onCancel }: ManualBookEntryProps) {
           <div className="space-y-2">
             {selectedBooks.map((book) => (
               <div key={book.id} className="flex items-center space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                {book.cover_url && (
-                  <img
-                    src={book.cover_url}
-                    alt={book.title}
-                    className="w-10 h-14 object-cover rounded"
-                  />
-                )}
+                <div className="flex-shrink-0 w-10 h-14">
+                  {book.cover_url ? (
+                    <Image
+                      src={book.cover_url}
+                      alt={book.title}
+                      className="w-full h-full object-cover rounded"
+                      width={48}
+                      height={64}
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded overflow-hidden">
+                      <GeneratedBookCover book={book} />
+                    </div>
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
                     {book.title}
