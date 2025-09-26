@@ -25,7 +25,7 @@ export default function BookCard({ book }: BookCardProps) {
   return (
     <div className="group book-perspective">
       {/* Book Cover with Realistic Effect */}
-      <div className="relative mb-3">
+      <div className="relative mb-6">
         <div className="realistic-book-cover">
           {book.cover_url && !imageError ? (
             <>

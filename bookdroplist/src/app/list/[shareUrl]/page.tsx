@@ -81,6 +81,11 @@ export default function ListPage() {
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-4">
             {bookList.name}
           </h1>
+          {bookList.description && (
+            <p className="text-gray-600 mb-4 max-w-2xl mx-auto">
+              {bookList.description}
+            </p>
+          )}
           <p className="text-gray-600 mt-2">
             {bookList.books.length} {bookList.books.length === 1 ? 'book' : 'books'} found
           </p>
@@ -90,10 +95,9 @@ export default function ListPage() {
         <PurposeDisplay purpose={bookList.purpose} />
 
         {/* Last Updated Indicator */}
-        <LastUpdated updatedAt={bookList.updated_at} purpose={bookList.purpose} />
+        {/* <LastUpdated updatedAt={bookList.updated_at} purpose={bookList.purpose} /> */}
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
-          <ShareButton shareUrl={shareUrl} />
+        <div className="flex justify-center items-center mb-8">
           <FavoriteButton listId={bookList.id} isOwner={bookList.isOwner || false} />
         </div>
 
@@ -125,6 +129,11 @@ export default function ListPage() {
             >
               My Lists
             </Link>
+          </div>
+
+          {/* Share Button at bottom */}
+          <div className="mt-8">
+            <ShareButton shareUrl={shareUrl} />
           </div>
         </div>
       </div>

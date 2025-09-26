@@ -23,6 +23,7 @@ export type ListPurpose = 'sharing' | 'pickup' | 'borrowing' | 'buying' | 'searc
 export interface BookList {
   id: string
   name: string
+  description?: string
   share_url: string
   created_at: string
   updated_at?: string

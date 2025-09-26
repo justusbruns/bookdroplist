@@ -107,7 +107,7 @@ export async function PUT(
     }
 
     const { shareUrl } = await params
-    const { name, purpose } = await request.json()
+    const { name, purpose, description } = await request.json()
     const session = await getSession()
 
     if (!session) {
@@ -163,9 +163,10 @@ export async function PUT(
     console.log('Using admin client for update operation')
 
     // Prepare update object - only include fields that are provided
-    const updateData: { name?: string; purpose?: string } = {}
+    const updateData: { name?: string; purpose?: string; description?: string } = {}
     if (name !== undefined) updateData.name = name
     if (purpose !== undefined) updateData.purpose = purpose
+    if (description !== undefined) updateData.description = description
 
     const { data, error } = await (supabaseAdmin as any)
       .from('lists')

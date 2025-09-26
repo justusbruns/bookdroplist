@@ -80,7 +80,7 @@ export default function EditableBookGrid({ books, onBooksUpdate, isLoading, onAd
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 items-end">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-8 md:gap-12 items-end">
       {editingBooks.map((book, index) => (
         <div
           key={book.id}
@@ -93,7 +93,7 @@ export default function EditableBookGrid({ books, onBooksUpdate, isLoading, onAd
           } ${isLoading ? 'opacity-60' : ''}`}
         >
           {/* Book Cover with Realistic Effect */}
-          <div className="relative mb-3">
+          <div className="relative mb-6">
             <div className="realistic-book-cover">
               {book.cover_url ? (
                 <Image
@@ -147,7 +147,7 @@ export default function EditableBookGrid({ books, onBooksUpdate, isLoading, onAd
       {onAddBooksClick && (
         <div className="group cursor-pointer book-perspective">
           {/* Add Books Cover with Green Design */}
-          <div className="relative mb-3">
+          <div className="relative mb-6">
             <div
               onClick={onAddBooksClick}
               className="add-book-card aspect-[2/3]"

@@ -7,6 +7,7 @@ import EditableBookGrid from '@/components/EditableBookGrid'
 import LocationCapture from '@/components/LocationCapture'
 import AddBooksToList from '@/components/AddBooksToList'
 import EditListName from '@/components/EditListName'
+import EditListDescription from '@/components/EditListDescription'
 import ListPurposeSelector from '@/components/ListPurposeSelector'
 import type { BookList, ListPurpose, Book } from '@/types'
 
@@ -69,6 +70,29 @@ export default function EditListPage() {
     } catch (err) {
       console.error('Error updating list name:', err)
       alert('Failed to update list name')
+    }
+  }
+
+  const handleDescriptionChange = async (newDescription: string) => {
+    if (!bookList) return
+
+    try {
+      const response = await fetch(`/api/lists/${shareUrl}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ description: newDescription }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update list description')
+      }
+
+      setBookList(prev => prev ? { ...prev, description: newDescription } : null)
+    } catch (err) {
+      console.error('Error updating list description:', err)
+      alert('Failed to update list description')
     }
   }
 
@@ -245,6 +269,19 @@ export default function EditListPage() {
           ) : (
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{bookList.name}</h1>
           )}
+
+          {/* Description */}
+          {bookList.isManager ? (
+            <div className="mb-4">
+              <EditListDescription
+                initialDescription={bookList.description}
+                onDescriptionUpdate={handleDescriptionChange}
+              />
+            </div>
+          ) : bookList.description ? (
+            <p className="text-gray-600 mb-4 max-w-2xl mx-auto">{bookList.description}</p>
+          ) : null}
+
           <div className="flex items-center justify-center gap-2 mt-2">
             <p className="text-gray-600">
               {bookList.books.length} {bookList.books.length === 1 ? 'book' : 'books'}

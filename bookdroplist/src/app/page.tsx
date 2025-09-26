@@ -36,6 +36,9 @@ export default function Home() {
       const response = await fetch('/api/user/profile')
       if (response.ok) {
         setIsAuthenticated(true)
+        // Redirect authenticated users to dashboard
+        router.push('/dashboard')
+        return
       } else {
         setIsAuthenticated(false)
       }
@@ -94,7 +97,7 @@ export default function Home() {
       }
 
       const { shareUrl } = await response.json()
-      router.push(`/list/${shareUrl}`)
+      router.push(`/list/${shareUrl}/edit`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred')
     } finally {

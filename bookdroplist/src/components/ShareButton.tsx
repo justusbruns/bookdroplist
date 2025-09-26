@@ -23,22 +23,23 @@ export default function ShareButton({ shareUrl }: ShareButtonProps) {
 
 
   return (
-    <div className="flex flex-col sm:flex-row items-center gap-4">
-      <div className="bg-white rounded-lg px-4 py-2 border border-gray-200 text-sm text-gray-600 font-mono">
+    <div className="flex items-center gap-2 w-80 mx-auto">
+      <div className="bg-white rounded-lg px-3 py-2 border border-gray-200 text-sm text-gray-600 font-mono flex-1 truncate">
         {fullUrl}
       </div>
 
       <button
         onClick={handleCopy}
         className={`
-          px-4 py-2 rounded-lg font-medium transition-colors text-sm
+          px-3 py-2 rounded-lg transition-colors text-lg
           ${copied
             ? 'bg-green-100 text-green-700'
             : 'bg-blue-600 text-white hover:bg-blue-700'
           }
         `}
+        title={copied ? 'Copied!' : 'Copy Link'}
       >
-        {copied ? 'Copied!' : 'Copy Link'}
+        {copied ? '✓' : '📋'}
       </button>
     </div>
   )

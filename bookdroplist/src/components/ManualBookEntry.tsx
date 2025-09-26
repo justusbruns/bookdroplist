@@ -119,7 +119,7 @@ export default function ManualBookEntry({ onCancel }: ManualBookEntryProps) {
       }
 
       const { shareUrl } = await response.json()
-      router.push(`/list/${shareUrl}`)
+      router.push(`/list/${shareUrl}/edit`)
     } catch (err) {
       console.error('Error creating list:', err)
       setError('Failed to create list. Please try again.')
