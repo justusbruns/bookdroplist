@@ -99,9 +99,10 @@ export default function EditableBookGrid({ books, onBooksUpdate, isLoading, onAd
                 <Image
                   src={book.cover_url}
                   alt={`Cover of ${book.title}`}
-                  className="w-full h-auto object-cover"
+                  className="w-full object-cover"
                   width={200}
                   height={300}
+                  style={{ height: 'auto' }}
                   onError={(e) => {
                     e.currentTarget.style.display = 'none'
                     // Show generated cover when image fails to load

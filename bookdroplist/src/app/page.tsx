@@ -113,10 +113,9 @@ export default function Home() {
             <Image
               src="/logo.svg"
               alt="Book Drop List Logo"
-              className="mx-auto w-24"
+              className="mx-auto"
               width={96}
               height={96}
-              style={{ height: 'auto' }}
             />
           </div>
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-4">

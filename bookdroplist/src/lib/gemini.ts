@@ -59,7 +59,7 @@ export async function extractBooksFromImage(imageFile: File): Promise<ExtractedB
       throw new Error('Gemini API key is not configured')
     }
 
-    const model = genAI.getGenerativeModel({ model: 'models/gemini-flash-lite-latest' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
 
     // Convert file to base64
     const bytes = await imageFile.arrayBuffer()
