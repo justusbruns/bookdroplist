@@ -120,13 +120,25 @@ async function getBookFromOpenLibraryByISBN(isbn: string): Promise<Partial<Book>
   }
 }
 
-export async function enrichBookData(title: string, author?: string, publisher?: string): Promise<Partial<Book>> {
+export async function enrichBookData(title: string, author?: string, publisher?: string, series?: string): Promise<Partial<Book>> {
   try {
     let searchQuery: string
     let fallbackQuery: string
 
-    // Build search query based on available information
-    if (author) {
+    // Build search query based on available information, prioritizing series for travel guides
+    if (series && publisher) {
+      // For travel guides with series info, build contextual query
+      if (series.toLowerCase().includes('eyewitness')) {
+        searchQuery = `"DK Eyewitness ${title} Travel Guide"`
+        fallbackQuery = `"${publisher} ${title} travel guide"`
+      } else if (series.toLowerCase().includes('lonely planet')) {
+        searchQuery = `"Lonely Planet ${title}"`
+        fallbackQuery = `"${publisher} ${title}"`
+      } else {
+        searchQuery = `"${series} ${title}"`
+        fallbackQuery = `title:"${title}" publisher:"${publisher}"`
+      }
+    } else if (author) {
       searchQuery = `title:"${title}" author:"${author}"`
       fallbackQuery = `title:"${title}"`
     } else if (publisher) {
@@ -152,7 +164,12 @@ export async function enrichBookData(title: string, author?: string, publisher?:
       }
 
       const book = fallbackData.docs[0]
-      const coverUrl = await getBookCover(title, author || book.author_name?.[0] || '', book.isbn?.[0])
+      // For travel guides, use series-aware cover search
+      const coverSearchTitle = (series && publisher) ?
+        (series.toLowerCase().includes('eyewitness') ? `DK Eyewitness ${title}` :
+         series.toLowerCase().includes('lonely planet') ? `Lonely Planet ${title}` :
+         `${series} ${title}`) : title
+      const coverUrl = await getBookCover(coverSearchTitle, author || book.author_name?.[0] || '', book.isbn?.[0])
 
       return {
         cover_url: coverUrl || (book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg` : undefined),
@@ -170,7 +187,12 @@ export async function enrichBookData(title: string, author?: string, publisher?:
     }
 
     const book = searchData.docs[0]
-    const coverUrl = await getBookCover(title, author || book.author_name?.[0] || '', book.isbn?.[0])
+    // For travel guides, use series-aware cover search
+    const coverSearchTitle = (series && publisher) ?
+      (series.toLowerCase().includes('eyewitness') ? `DK Eyewitness ${title}` :
+       series.toLowerCase().includes('lonely planet') ? `Lonely Planet ${title}` :
+       `${series} ${title}`) : title
+    const coverUrl = await getBookCover(coverSearchTitle, author || book.author_name?.[0] || '', book.isbn?.[0])
 
     return {
       cover_url: coverUrl || (book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg` : undefined),

@@ -67,11 +67,12 @@ export async function POST(request: NextRequest) {
       const needsEnrichment = !enrichedData.cover_url && !extractedBook.isbn
 
       if (needsEnrichment) {
-        console.log('Enriching book data for cover/metadata:', finalTitle, finalAuthor || 'by ' + extractedBook.publisher)
+        console.log('Enriching book data for cover/metadata:', finalTitle, finalAuthor || 'by ' + extractedBook.publisher, extractedBook.series ? 'series: ' + extractedBook.series : '')
         const additionalData = await enrichBookData(
           finalTitle,
           finalAuthor,
-          extractedBook.publisher
+          extractedBook.publisher,
+          extractedBook.series
         )
         // Only supplement missing fields, don't override Gemini data
         enrichedData = {
