@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import type { Book } from '@/types'
 import GeneratedBookCover from './GeneratedBookCover'
-import BookDetailModal from './BookDetailModal'
 
 interface EditableBookGridProps {
   books: Book[]
@@ -16,8 +16,8 @@ interface EditableBookGridProps {
 export default function EditableBookGrid({ books, onBooksUpdate, isLoading, onAddBooksClick }: EditableBookGridProps) {
   const [editingBooks, setEditingBooks] = useState<Book[]>(books)
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
-  const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const router = useRouter()
 
   // Sync internal state with props when books change
   useEffect(() => {
@@ -25,11 +25,14 @@ export default function EditableBookGrid({ books, onBooksUpdate, isLoading, onAd
   }, [books])
 
   const handleBookClick = (book: Book, e: React.MouseEvent) => {
-    // Only open modal if we're not dragging
+    // Only navigate if we're not dragging
     if (!isDragging) {
       e.preventDefault()
       e.stopPropagation()
-      setSelectedBook(book)
+      // Store book data and referrer for the detail page
+      sessionStorage.setItem('selectedBook', JSON.stringify(book))
+      sessionStorage.setItem('bookDetailReferrer', window.location.pathname)
+      router.push(`/book/${book.id}`)
     }
   }
 
@@ -188,15 +191,6 @@ export default function EditableBookGrid({ books, onBooksUpdate, isLoading, onAd
             </p>
           </div>
         </div>
-      )}
-
-      {/* Modal */}
-      {selectedBook && (
-        <BookDetailModal
-          book={selectedBook}
-          isOpen={!!selectedBook}
-          onClose={() => setSelectedBook(null)}
-        />
       )}
     </div>
   )

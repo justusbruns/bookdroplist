@@ -147,3 +147,12 @@ body {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   transform: rotateY(-3deg) rotateX(0deg) rotateZ(1deg) translateY(0); /* Pushes back down */
 }
+
+/* Utility classes for the book detail page */
+.transform-style-preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}

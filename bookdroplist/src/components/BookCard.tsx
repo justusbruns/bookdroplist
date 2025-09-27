@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import type { Book } from '@/types'
 import GeneratedBookCover from './GeneratedBookCover'
-import BookDetailModal from './BookDetailModal'
 
 interface BookCardProps {
   book: Book
@@ -13,7 +13,7 @@ interface BookCardProps {
 export default function BookCard({ book }: BookCardProps) {
   const [imageError, setImageError] = useState(false)
   const [imageLoading, setImageLoading] = useState(true)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const router = useRouter()
 
   const handleImageError = () => {
     setImageError(true)
@@ -24,12 +24,18 @@ export default function BookCard({ book }: BookCardProps) {
     setImageLoading(false)
   }
 
+  const handleClick = () => {
+    // Store book data and referrer for the detail page
+    sessionStorage.setItem('selectedBook', JSON.stringify(book))
+    sessionStorage.setItem('bookDetailReferrer', window.location.pathname)
+    router.push(`/book/${book.id}`)
+  }
+
   return (
-    <>
-      <div
-        className="group book-perspective cursor-pointer hover:scale-105 transition-transform duration-200"
-        onClick={() => setIsModalOpen(true)}
-      >
+    <div
+      className="group book-perspective cursor-pointer hover:scale-105 transition-transform duration-200"
+      onClick={handleClick}
+    >
         {/* Book Cover with Realistic Effect */}
         <div className="relative mb-6">
           <div className="realistic-book-cover">
@@ -73,14 +79,6 @@ export default function BookCard({ book }: BookCardProps) {
           }
         </p>
       </div>
-      </div>
-
-      {/* Modal */}
-      <BookDetailModal
-        book={book}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
-    </>
+    </div>
   )
 }
