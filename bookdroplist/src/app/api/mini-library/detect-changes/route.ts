@@ -14,8 +14,8 @@ interface BookChange {
 function calculateBookSimilarity(book1: Book, book2: Book): number {
   const title1 = book1.title.toLowerCase().trim()
   const title2 = book2.title.toLowerCase().trim()
-  const author1 = book1.author.toLowerCase().trim()
-  const author2 = book2.author.toLowerCase().trim()
+  const author1 = (book1.author || '').toLowerCase().trim()
+  const author2 = (book2.author || '').toLowerCase().trim()
 
   // Simple similarity check - can be enhanced with better matching algorithms
   const titleMatch = title1.includes(title2) || title2.includes(title1) || title1 === title2

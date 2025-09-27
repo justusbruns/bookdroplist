@@ -6,7 +6,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import ImageUpload from '@/components/ImageUpload'
 import ProcessingState from '@/components/ProcessingState'
-import LocationCapture from '@/components/LocationCapture'
 import EmailRequest from '@/components/EmailRequest'
 import EmailSent from '@/components/EmailSent'
 import ManualBookEntry from '@/components/ManualBookEntry'
@@ -15,8 +14,6 @@ export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [uploadedImage, setUploadedImage] = useState<File | null>(null)
-  const [capturedLocation, setCapturedLocation] = useState<{ latitude: number; longitude: number } | null>(null)
-  const [locationCaptured, setLocationCaptured] = useState(false)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [emailSent, setEmailSent] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -36,9 +33,14 @@ export default function Home() {
       const response = await fetch('/api/user/profile')
       if (response.ok) {
         setIsAuthenticated(true)
-        // Redirect authenticated users to dashboard
-        router.push('/dashboard')
-        return
+        // Only redirect to dashboard if not explicitly creating a new list
+        // Check URL parameters for create flag
+        const urlParams = new URLSearchParams(window.location.search)
+        const isCreating = urlParams.get('create') === 'true'
+        if (!isCreating) {
+          router.push('/dashboard')
+          return
+        }
       } else {
         setIsAuthenticated(false)
       }
@@ -50,41 +52,17 @@ export default function Home() {
     }
   }
 
-  const handleImageUpload = (file: File) => {
+  const handleImageUpload = async (file: File) => {
     setUploadedImage(file)
     setShowImageUpload(false)
     setError(null)
-  }
 
-  const handleEmailSubmit = (email: string) => {
-    setUserEmail(email)
-    setEmailSent(true)
-  }
-
-  const handleBackToEmail = () => {
-    setEmailSent(false)
-    setUserEmail(null)
-  }
-
-  const handleLocationCapture = (location: { latitude: number; longitude: number } | null) => {
-    setCapturedLocation(location)
-    setLocationCaptured(true)
-  }
-
-  const processImageAndLocation = async () => {
-    if (!uploadedImage) return
-
+    // Skip location capture and process immediately
     setIsProcessing(true)
-    setError(null)
 
     try {
       const formData = new FormData()
-      formData.append('image', uploadedImage)
-
-      if (capturedLocation) {
-        formData.append('latitude', capturedLocation.latitude.toString())
-        formData.append('longitude', capturedLocation.longitude.toString())
-      }
+      formData.append('image', file)
 
       const response = await fetch('/api/process-image', {
         method: 'POST',
@@ -104,6 +82,17 @@ export default function Home() {
       setIsProcessing(false)
     }
   }
+
+  const handleEmailSubmit = (email: string) => {
+    setUserEmail(email)
+    setEmailSent(true)
+  }
+
+  const handleBackToEmail = () => {
+    setEmailSent(false)
+    setUserEmail(null)
+  }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
@@ -165,36 +154,6 @@ export default function Home() {
                 </button>
               </div>
               <ImageUpload onImageUpload={handleImageUpload} />
-            </div>
-          ) : uploadedImage && !locationCaptured ? (
-            <div className="space-y-6">
-              <div className="bg-white rounded-lg p-6 shadow-md">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  📸 Image uploaded successfully!
-                </h2>
-                <p className="text-gray-600 mb-4">
-                  Now let's add location information to help others discover books in their area.
-                </p>
-                <LocationCapture onLocationCapture={handleLocationCapture} />
-              </div>
-            </div>
-          ) : uploadedImage && locationCaptured ? (
-            <div className="space-y-6">
-              <div className="bg-white rounded-lg p-6 shadow-md text-center">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Ready to create your book list!
-                </h2>
-                <div className="space-y-2 text-sm text-gray-600 mb-6">
-                  <div>✅ Image uploaded</div>
-                  <div>✅ {capturedLocation ? 'Location captured' : 'Skipping location'}</div>
-                </div>
-                <button
-                  onClick={processImageAndLocation}
-                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                >
-                  Create Book List
-                </button>
-              </div>
             </div>
           ) : (
             <div className="space-y-6">

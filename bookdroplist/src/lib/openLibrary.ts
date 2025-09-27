@@ -1,5 +1,25 @@
 import type { Book } from '@/types'
 
+interface GoogleBooksVolumeInfo {
+  title: string
+  authors?: string[]
+  publisher?: string
+  publishedDate?: string
+  industryIdentifiers?: Array<{
+    type: string
+    identifier: string
+  }>
+  imageLinks?: {
+    thumbnail?: string
+    small?: string
+    medium?: string
+    large?: string
+    extraLarge?: string
+  }
+  description?: string
+  categories?: string[]
+}
+
 // Helper function to remove curl effect from Google Books cover URLs
 function cleanGoogleBooksUrl(url: string): string {
   if (!url) return url
@@ -18,51 +38,148 @@ interface OpenLibrarySearchResult {
   }[]
 }
 
-export async function enrichBookData(title: string, author: string): Promise<Partial<Book>> {
+// Direct ISBN lookup for instant book identification
+export async function getBookByISBN(isbn: string): Promise<Partial<Book> | null> {
   try {
-    // Search for the book using title and author
-    const searchQuery = `title:"${title}" author:"${author}"`
-    const searchUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}&limit=1`
+    // Clean the ISBN
+    const cleanISBN = isbn.replace(/[-\s]/g, '')
 
+    // Try Google Books API first (most comprehensive)
+    const googleResult = await getBookFromGoogleByISBN(cleanISBN)
+    if (googleResult) return googleResult
+
+    // Fallback to OpenLibrary
+    const openLibraryResult = await getBookFromOpenLibraryByISBN(cleanISBN)
+    if (openLibraryResult) return openLibraryResult
+
+    return null
+  } catch (error) {
+    console.error('Error getting book by ISBN:', error)
+    return null
+  }
+}
+
+async function getBookFromGoogleByISBN(isbn: string): Promise<Partial<Book> | null> {
+  try {
+    const url = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`
+    const response = await fetch(url)
+
+    if (!response.ok) return null
+
+    const data = await response.json()
+    if (!data.items || data.items.length === 0) return null
+
+    const volumeInfo: GoogleBooksVolumeInfo = data.items[0].volumeInfo
+
+    return {
+      title: volumeInfo.title,
+      author: volumeInfo.authors?.[0] || 'Unknown Author',
+      publisher: volumeInfo.publisher,
+      publication_year: volumeInfo.publishedDate ? parseInt(volumeInfo.publishedDate.substring(0, 4)) : undefined,
+      isbn: isbn,
+      description: volumeInfo.description,
+      genre: volumeInfo.categories?.[0],
+      cover_url: volumeInfo.imageLinks ? cleanGoogleBooksUrl(
+        volumeInfo.imageLinks?.extraLarge ||
+        volumeInfo.imageLinks?.large ||
+        volumeInfo.imageLinks?.medium ||
+        volumeInfo.imageLinks?.thumbnail ||
+        ''
+      ) : undefined
+    }
+  } catch (error) {
+    console.error('Error fetching from Google Books by ISBN:', error)
+    return null
+  }
+}
+
+async function getBookFromOpenLibraryByISBN(isbn: string): Promise<Partial<Book> | null> {
+  try {
+    const url = `https://openlibrary.org/search.json?isbn=${isbn}&limit=1`
+    const response = await fetch(url)
+
+    if (!response.ok) return null
+
+    const data: OpenLibrarySearchResult = await response.json()
+    if (!data.docs || data.docs.length === 0) return null
+
+    const book = data.docs[0]
+
+    return {
+      title: book.title,
+      author: book.author_name?.[0] || 'Unknown Author',
+      publisher: book.publisher?.[0],
+      publication_year: book.first_publish_year,
+      isbn: isbn,
+      genre: book.subject?.[0],
+      cover_url: book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg` : undefined
+    }
+  } catch (error) {
+    console.error('Error fetching from OpenLibrary by ISBN:', error)
+    return null
+  }
+}
+
+export async function enrichBookData(title: string, author?: string, publisher?: string): Promise<Partial<Book>> {
+  try {
+    let searchQuery: string
+    let fallbackQuery: string
+
+    // Build search query based on available information
+    if (author) {
+      searchQuery = `title:"${title}" author:"${author}"`
+      fallbackQuery = `title:"${title}"`
+    } else if (publisher) {
+      searchQuery = `title:"${title}" publisher:"${publisher}"`
+      fallbackQuery = `title:"${title}"`
+    } else {
+      searchQuery = `title:"${title}"`
+      fallbackQuery = searchQuery
+    }
+
+    const searchUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}&limit=1`
     const searchResponse = await fetch(searchUrl)
     const searchData: OpenLibrarySearchResult = await searchResponse.json()
 
-    if (searchData.docs.length === 0) {
-      // Fallback: search with just title
-      const titleOnlyUrl = `https://openlibrary.org/search.json?title=${encodeURIComponent(title)}&limit=1`
-      const titleResponse = await fetch(titleOnlyUrl)
-      const titleData: OpenLibrarySearchResult = await titleResponse.json()
+    if (searchData.docs.length === 0 && searchQuery !== fallbackQuery) {
+      // Try fallback search
+      const fallbackUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(fallbackQuery)}&limit=1`
+      const fallbackResponse = await fetch(fallbackUrl)
+      const fallbackData: OpenLibrarySearchResult = await fallbackResponse.json()
 
-      if (titleData.docs.length === 0) {
+      if (fallbackData.docs.length === 0) {
         return {}
       }
 
-      const book = titleData.docs[0]
-      const coverUrl = await getBookCover(title, author, book.isbn?.[0])
+      const book = fallbackData.docs[0]
+      const coverUrl = await getBookCover(title, author || book.author_name?.[0] || '', book.isbn?.[0])
 
       return {
         cover_url: coverUrl || (book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg` : undefined),
         publication_year: book.first_publish_year,
         isbn: book.isbn?.[0],
-        publisher: book.publisher?.[0],
-        genre: book.subject?.[0]
+        publisher: publisher || book.publisher?.[0],
+        genre: book.subject?.[0],
+        // Fill in missing author if found in search results
+        ...(author ? {} : { author: book.author_name?.[0] })
       }
     }
 
+    if (searchData.docs.length === 0) {
+      return {}
+    }
+
     const book = searchData.docs[0]
-
-    // Get additional details if we have a work ID
-    let description: string | undefined
-
-    const coverUrl = await getBookCover(title, author, book.isbn?.[0])
+    const coverUrl = await getBookCover(title, author || book.author_name?.[0] || '', book.isbn?.[0])
 
     return {
       cover_url: coverUrl || (book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg` : undefined),
       publication_year: book.first_publish_year,
       isbn: book.isbn?.[0],
-      publisher: book.publisher?.[0],
+      publisher: publisher || book.publisher?.[0],
       genre: book.subject?.[0],
-      description
+      // Fill in missing author if found in search results
+      ...(author ? {} : { author: book.author_name?.[0] })
     }
   } catch (error) {
     console.error('Error enriching book data:', error)

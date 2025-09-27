@@ -59,7 +59,12 @@ export default function BookCard({ book }: BookCardProps) {
           {book.title}
         </h3>
         <p className="text-gray-600 text-xs">
-          {book.author}
+          {book.author && book.author !== 'Unknown'
+            ? `by ${book.author}`
+            : book.publisher
+              ? `Published by ${book.publisher}`
+              : 'Unknown Author'
+          }
         </p>
       </div>
     </div>

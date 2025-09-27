@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { extractBooksFromImage } from '@/lib/gemini'
-import { enrichBookData } from '@/lib/openLibrary'
+import { enrichBookData, getBookByISBN } from '@/lib/openLibrary'
 import { geocodeLocation, fuzzLocation } from '@/lib/location'
 import { supabase } from '@/lib/supabase'
 import { requireAuth } from '@/lib/session'
@@ -42,14 +42,45 @@ export async function POST(request: NextRequest) {
     const books: Book[] = []
 
     for (const extractedBook of extractedBooks) {
-      // Enrich with metadata from Open Library
-      const enrichedData = await enrichBookData(extractedBook.title, extractedBook.author)
+      let enrichedData: Partial<Book> = {}
+      let finalAuthor = extractedBook.author
+      let finalTitle = extractedBook.title
+
+      // For ISBN detection, try direct lookup first
+      if (extractedBook.isbn) {
+        console.log('Attempting direct ISBN lookup for:', extractedBook.isbn)
+        const isbnData = await getBookByISBN(extractedBook.isbn)
+        if (isbnData) {
+          enrichedData = isbnData
+          // Use data from ISBN lookup if better than extracted data
+          if (isbnData.title && isbnData.title !== 'Unknown Title') {
+            finalTitle = isbnData.title
+          }
+          if (isbnData.author && isbnData.author !== 'Unknown Author') {
+            finalAuthor = isbnData.author
+          }
+        }
+      }
+
+      // If ISBN lookup didn't provide enough data, try traditional enrichment
+      if (!enrichedData.cover_url || !enrichedData.publisher) {
+        console.log('Enriching book data for:', finalTitle, finalAuthor || extractedBook.publisher)
+        const additionalData = await enrichBookData(
+          finalTitle,
+          finalAuthor,
+          extractedBook.publisher
+        )
+        enrichedData = { ...additionalData, ...enrichedData } // ISBN data takes priority
+      }
 
       const book: Book = {
         id: uuidv4(),
-        title: extractedBook.title,
-        author: extractedBook.author,
-        ...enrichedData
+        title: finalTitle,
+        author: finalAuthor || enrichedData.author || extractedBook.publisher || 'Unknown',
+        ...enrichedData,
+        // Preserve extracted data
+        ...(extractedBook.publisher ? { publisher: extractedBook.publisher } : {}),
+        ...(extractedBook.isbn ? { isbn: extractedBook.isbn } : {})
       }
 
       console.log('Attempting to insert book:', book)

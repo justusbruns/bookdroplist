@@ -137,7 +137,12 @@ export default function EditableBookGrid({ books, onBooksUpdate, isLoading, onAd
               {book.title}
             </h3>
             <p className="text-gray-600 text-xs">
-              {book.author}
+              {book.author && book.author !== 'Unknown'
+                ? `by ${book.author}`
+                : book.publisher
+                  ? `Published by ${book.publisher}`
+                  : 'Unknown Author'
+              }
             </p>
           </div>
         </div>

@@ -43,7 +43,19 @@ export default function GeneratedBookCover({ book, className = '' }: GeneratedBo
   const { bg, text } = generateColorFromTitle(book.title)
 
   const truncatedTitle = truncateText(book.title, 45)
-  const truncatedAuthor = truncateText(book.author, 30)
+
+  // Determine what to show as the "author" line
+  const getDisplayAuthor = () => {
+    if (book.author && book.author !== 'Unknown') {
+      return book.author
+    }
+    if (book.publisher) {
+      return book.publisher
+    }
+    return 'Unknown'
+  }
+
+  const truncatedAuthor = truncateText(getDisplayAuthor(), 30)
 
   return (
     <div className={`w-full aspect-[2/3] bg-gradient-to-br ${bg} ${text} p-3 flex flex-col justify-between relative overflow-hidden ${className}`}>

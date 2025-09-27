@@ -199,7 +199,7 @@ function deduplicateBooks(books: EnhancedBook[]): EnhancedBook[] {
 
   for (const book of books) {
     // Create a key for deduplication based on normalized title and author
-    const key = `${normalizeTitle(book.title)}_${book.author.toLowerCase()}`
+    const key = `${normalizeTitle(book.title)}_${(book.author || '').toLowerCase()}`
 
     if (!seen.has(key)) {
       seen.set(key, book)
@@ -324,7 +324,7 @@ export async function POST(request: NextRequest) {
 
     for (const extractedBook of extractedBooks) {
       // Use enhanced search for better book matching
-      const enrichedBook = await searchForBook(extractedBook.title, extractedBook.author)
+      const enrichedBook = await searchForBook(extractedBook.title, extractedBook.author || '')
       books.push(enrichedBook)
     }
 
