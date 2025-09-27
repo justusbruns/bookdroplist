@@ -64,34 +64,64 @@ export async function extractBooksFromImage(imageFile: File): Promise<ExtractedB
     const base64 = Buffer.from(bytes).toString('base64')
 
     const prompt = `
-      Analyze this image and extract book information from:
-      1. Book spines, covers, or visible text
-      2. ISBN codes or barcodes (if present)
-      3. Publisher information when no clear author is visible
+      I need you to carefully analyze this image to extract book information. Follow this systematic approach:
 
-      For each book, extract as much information as possible:
+      STEP 1: HORIZONTAL SCAN
+      - Look across the image from left to right
+      - Identify each individual book spine or cover
+      - Note the position and orientation of each book
+      - Look for text on spines, covers, and any visible ISBN codes
 
-      Return a JSON array of objects with available fields:
-      - title: the book title (required, clean without extra formatting)
-      - author: author name (optional, clean without extra formatting)
-      - publisher: publisher name (optional, especially for travel guides, art books, etc.)
-      - series: book series name (optional, e.g., "Lonely Planet", "Rick Steves")
-      - isbn: ISBN code if visible (optional, clean numbers only)
-      - type: "spine_text" for books read from covers/spines, "isbn_code" for ISBN detection
+      STEP 2: VERTICAL SCAN
+      - Look up and down the image
+      - Check for books in different orientations (some may be rotated)
+      - Look for any missed books or text from the horizontal scan
+      - Pay special attention to book tops and bottoms
 
-      Include books if you can identify:
-      - Title + Author (traditional books)
-      - Title + Publisher (travel guides, coffee table books, reference books)
-      - Valid ISBN code (even if title/author unclear)
+      STEP 3: DETAILED TEXT EXTRACTION
+      For each book identified, extract:
+      - Title (most prominent text, often largest)
+      - Author (usually smaller text, may say "by [name]")
+      - Publisher (often at bottom of spine or on cover)
+      - Series (like "Lonely Planet", "Rick Steves", etc.)
+      - ISBN (13-digit number, often with barcode)
 
-      Examples:
+      STEP 4: VERIFICATION
+      - Compare your horizontal and vertical scan results
+      - Ensure each book is counted only once
+      - Double-check that titles, authors, and publishers are not mixed between different books
+      - If uncertain about any book's details, include only the information you're confident about
+
+      STEP 5: FINAL CHECK
+      - Review each book entry to ensure it represents a single, distinct book
+      - Verify no information is accidentally combined from multiple books
+      - Confirm ISBN numbers are complete 10 or 13 digit sequences
+
+      OUTPUT FORMAT:
+      Return a JSON array with objects containing these fields:
+      - title: the book title (required, clean text without extra formatting)
+      - author: author name (optional, clean text without "by" prefix)
+      - publisher: publisher name (optional, especially important for travel guides, art books)
+      - series: book series name (optional, like "Lonely Planet", "Rick Steves")
+      - isbn: complete ISBN code if visible (optional, digits only, no dashes)
+      - type: "spine_text" for books read from spines/covers, "isbn_code" for ISBN-only detection
+
+      IMPORTANT GUIDELINES:
+      - Each JSON object must represent exactly ONE book
+      - Do not mix information from different books
+      - Include books if you can identify: Title + Author OR Title + Publisher OR Valid ISBN
+      - For travel guides and coffee table books, publisher is often more important than author
+      - If you can only see an ISBN clearly but not the title, include it as type "isbn_code"
+
+      EXAMPLES:
       [
         {"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "type": "spine_text"},
-        {"title": "Rome Travel Guide", "publisher": "Lonely Planet", "series": "Lonely Planet", "type": "spine_text"},
+        {"title": "Rome", "publisher": "Lonely Planet", "series": "Lonely Planet", "type": "spine_text"},
+        {"title": "Van Gogh Paintings", "publisher": "Taschen", "type": "spine_text"},
         {"title": "Unknown Title", "isbn": "9781234567890", "type": "isbn_code"}
       ]
 
-      Return only the JSON array, no additional text.
+      Return ONLY the JSON array, no additional text or explanation.
     `
 
     const result = await model.generateContent([
