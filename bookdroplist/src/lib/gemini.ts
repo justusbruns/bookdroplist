@@ -48,6 +48,8 @@ export interface ExtractedBook {
   series?: string
   isbn?: string
   type?: 'spine_text' | 'isbn_code'
+  position?: string
+  confidence?: number
 }
 
 export async function extractBooksFromImage(imageFile: File): Promise<ExtractedBook[]> {
@@ -64,64 +66,77 @@ export async function extractBooksFromImage(imageFile: File): Promise<ExtractedB
     const base64 = Buffer.from(bytes).toString('base64')
 
     const prompt = `
-      I need you to carefully analyze this image to extract book information. Follow this systematic approach:
+      Analyze this image to extract book information using this precise methodology:
 
-      STEP 1: HORIZONTAL SCAN
-      - Look across the image from left to right
-      - Identify each individual book spine or cover
-      - Note the position and orientation of each book
-      - Look for text on spines, covers, and any visible ISBN codes
+      STEP 1: INITIAL HORIZONTAL SCAN
+      - Scan left to right across the entire image
+      - For each book spine or cover you see, record its approximate position (left, center, right)
+      - Note orientation: vertical spine, horizontal book, angled book
+      - Create a mental list of distinct book positions
+      - Count total number of separate books visible
 
-      STEP 2: VERTICAL SCAN
-      - Look up and down the image
-      - Check for books in different orientations (some may be rotated)
-      - Look for any missed books or text from the horizontal scan
-      - Pay special attention to book tops and bottoms
+      STEP 2: INITIAL VERTICAL SCAN
+      - Scan top to bottom across the entire image
+      - Look for any books you missed in horizontal scan
+      - Pay attention to books that might be stacked, rotated, or partially hidden
+      - Check for books in unusual orientations
+      - Update your count of total books
 
-      STEP 3: DETAILED TEXT EXTRACTION
-      For each book identified, extract:
-      - Title (most prominent text, often largest)
-      - Author (usually smaller text, may say "by [name]")
-      - Publisher (often at bottom of spine or on cover)
-      - Series (like "Lonely Planet", "Rick Steves", etc.)
-      - ISBN (13-digit number, often with barcode)
+      STEP 3: CROSS-VERIFICATION
+      - Compare results from Step 1 and Step 2
+      - If the book counts differ significantly (more than 1-2 books), START OVER from Step 1
+      - Ensure you have identified the same books in both scans
+      - Create a verified list of book positions before proceeding
 
-      STEP 4: VERIFICATION
-      - Compare your horizontal and vertical scan results
-      - Ensure each book is counted only once
-      - Double-check that titles, authors, and publishers are not mixed between different books
-      - If uncertain about any book's details, include only the information you're confident about
+      STEP 4: DETAILED TEXT EXTRACTION (for each verified book position)
+      For each book location identified in Steps 1-3:
+      - Focus ONLY on that specific book position
+      - Extract title (usually the largest text on spine/cover)
+      - Extract author (often smaller text, may include "by" prefix)
+      - Extract publisher (commonly at bottom of spine or corner of cover)
+      - Extract series name (like "Lonely Planet", "Rick Steves", "DK Eyewitness")
+      - Look for ISBN (13-digit number, often near barcode)
+      - Note book type: spine_text or isbn_code
 
-      STEP 5: FINAL CHECK
-      - Review each book entry to ensure it represents a single, distinct book
-      - Verify no information is accidentally combined from multiple books
-      - Confirm ISBN numbers are complete 10 or 13 digit sequences
+      STEP 5: DATA INTEGRITY CHECK
+      For each extracted book:
+      - Verify all information comes from the SAME book position
+      - Do NOT combine title from one book with author from another book
+      - If uncertain about any detail, mark it as unknown rather than guess
+      - Check ISBN format: must be exactly 10 or 13 digits
 
-      OUTPUT FORMAT:
-      Return a JSON array with objects containing these fields:
-      - title: the book title (required, clean text without extra formatting)
-      - author: author name (optional, clean text without "by" prefix)
-      - publisher: publisher name (optional, especially important for travel guides, art books)
-      - series: book series name (optional, like "Lonely Planet", "Rick Steves")
-      - isbn: complete ISBN code if visible (optional, digits only, no dashes)
-      - type: "spine_text" for books read from spines/covers, "isbn_code" for ISBN-only detection
+      STEP 6: FINAL VALIDATION
+      - Review your list against the original image one more time
+      - Ensure book count matches what you can clearly see
+      - Remove any entries where you mixed data between books
+      - Keep only books where you are confident about the information
 
-      IMPORTANT GUIDELINES:
-      - Each JSON object must represent exactly ONE book
-      - Do not mix information from different books
-      - Include books if you can identify: Title + Author OR Title + Publisher OR Valid ISBN
-      - For travel guides and coffee table books, publisher is often more important than author
-      - If you can only see an ISBN clearly but not the title, include it as type "isbn_code"
+      OUTPUT REQUIREMENTS:
+      Return a JSON array with these exact fields:
+      - title: book title (required, no extra formatting)
+      - author: author name (optional, remove "by" prefix if present)
+      - publisher: publisher name (optional, crucial for travel/art books)
+      - series: series name (optional, e.g., "Lonely Planet")
+      - isbn: ISBN digits only (optional, no dashes/spaces)
+      - type: "spine_text" or "isbn_code"
+      - position: approximate location "left"|"center"|"right" (for verification)
+      - confidence: your confidence level 0.1-1.0
 
-      EXAMPLES:
+      CRITICAL RULES:
+      1. Each JSON object = exactly ONE physical book
+      2. Never mix information between different books
+      3. Include only books you can clearly identify
+      4. Better to have fewer accurate entries than many inaccurate ones
+      5. If scan results don't align in Step 3, restart the process
+
+      EXAMPLE OUTPUT:
       [
-        {"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "type": "spine_text"},
-        {"title": "Rome", "publisher": "Lonely Planet", "series": "Lonely Planet", "type": "spine_text"},
-        {"title": "Van Gogh Paintings", "publisher": "Taschen", "type": "spine_text"},
-        {"title": "Unknown Title", "isbn": "9781234567890", "type": "isbn_code"}
+        {"title": "The Great Gatsby", "author": "F. Scott Fitzgerald", "type": "spine_text", "position": "left", "confidence": 0.9},
+        {"title": "Rome", "publisher": "Lonely Planet", "series": "Lonely Planet", "type": "spine_text", "position": "center", "confidence": 0.8},
+        {"title": "Art History", "publisher": "Taschen", "type": "spine_text", "position": "right", "confidence": 0.7}
       ]
 
-      Return ONLY the JSON array, no additional text or explanation.
+      Return ONLY the JSON array.
     `
 
     const result = await model.generateContent([
