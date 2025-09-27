@@ -83,11 +83,15 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Handle author field for database NOT NULL constraint
+      const authorField = finalAuthor || enrichedData.author
+      const publisherField = extractedBook.publisher || enrichedData.publisher
+
       const book: Book = {
         id: uuidv4(),
         title: finalTitle,
-        author: finalAuthor || enrichedData.author, // Don't use publisher as author fallback
-        publisher: extractedBook.publisher || enrichedData.publisher, // Preserve Gemini publisher
+        author: authorField || (publisherField ? `Published by ${publisherField}` : 'Unknown Author'),
+        publisher: publisherField, // Preserve Gemini publisher
         isbn: extractedBook.isbn || enrichedData.isbn, // Preserve Gemini ISBN
         // Only add enriched data for fields not detected by Gemini
         cover_url: enrichedData.cover_url,
