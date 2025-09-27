@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import type { Book } from '@/types'
 import GeneratedBookCover from './GeneratedBookCover'
+import BookDetailModal from './BookDetailModal'
 
 interface EditableBookGridProps {
   books: Book[]
@@ -15,11 +16,22 @@ interface EditableBookGridProps {
 export default function EditableBookGrid({ books, onBooksUpdate, isLoading, onAddBooksClick }: EditableBookGridProps) {
   const [editingBooks, setEditingBooks] = useState<Book[]>(books)
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
 
   // Sync internal state with props when books change
   useEffect(() => {
     setEditingBooks(books)
   }, [books])
+
+  const handleBookClick = (book: Book, e: React.MouseEvent) => {
+    // Only open modal if we're not dragging
+    if (!isDragging) {
+      e.preventDefault()
+      e.stopPropagation()
+      setSelectedBook(book)
+    }
+  }
 
 
   const handleRemoveBook = (index: number) => {
@@ -34,6 +46,7 @@ export default function EditableBookGrid({ books, onBooksUpdate, isLoading, onAd
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIndex(index)
+    setIsDragging(true)
     e.dataTransfer.effectAllowed = 'move'
   }
 
@@ -47,6 +60,7 @@ export default function EditableBookGrid({ books, onBooksUpdate, isLoading, onAd
 
     if (draggedIndex === null || draggedIndex === dropIndex) {
       setDraggedIndex(null)
+      setIsDragging(false)
       return
     }
 
@@ -61,6 +75,7 @@ export default function EditableBookGrid({ books, onBooksUpdate, isLoading, onAd
 
     setEditingBooks(updatedBooks)
     setDraggedIndex(null)
+    setIsDragging(false)
 
     const cleanBooks = updatedBooks
     onBooksUpdate(cleanBooks)
@@ -88,7 +103,8 @@ export default function EditableBookGrid({ books, onBooksUpdate, isLoading, onAd
           onDragStart={(e) => handleDragStart(e, index)}
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, index)}
-          className={`group cursor-move transition-all duration-200 book-perspective ${
+          onClick={(e) => handleBookClick(book, e)}
+          className={`group cursor-move hover:cursor-pointer transition-all duration-200 book-perspective ${
             draggedIndex === index ? 'opacity-50 scale-95' : ''
           } ${isLoading ? 'opacity-60' : ''}`}
         >
@@ -121,7 +137,10 @@ export default function EditableBookGrid({ books, onBooksUpdate, isLoading, onAd
 
               {/* Remove Button - positioned absolutely over the book cover */}
               <button
-                onClick={() => handleRemoveBook(index)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleRemoveBook(index)
+                }}
                 className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full shadow-lg z-30"
                 title="Remove book"
               >
@@ -169,6 +188,15 @@ export default function EditableBookGrid({ books, onBooksUpdate, isLoading, onAd
             </p>
           </div>
         </div>
+      )}
+
+      {/* Modal */}
+      {selectedBook && (
+        <BookDetailModal
+          book={selectedBook}
+          isOpen={!!selectedBook}
+          onClose={() => setSelectedBook(null)}
+        />
       )}
     </div>
   )

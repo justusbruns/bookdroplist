@@ -18,6 +18,12 @@ interface GoogleBooksVolumeInfo {
   }
   description?: string
   categories?: string[]
+  // Enhanced metadata
+  averageRating?: number
+  ratingsCount?: number
+  pageCount?: number
+  language?: string
+  maturityRating?: string
 }
 
 // Helper function to remove curl effect from Google Books cover URLs
@@ -85,7 +91,14 @@ async function getBookFromGoogleByISBN(isbn: string): Promise<Partial<Book> | nu
         volumeInfo.imageLinks?.medium ||
         volumeInfo.imageLinks?.thumbnail ||
         ''
-      ) : undefined
+      ) : undefined,
+      // Enhanced metadata
+      average_rating: volumeInfo.averageRating,
+      ratings_count: volumeInfo.ratingsCount,
+      page_count: volumeInfo.pageCount,
+      language: volumeInfo.language,
+      categories: volumeInfo.categories,
+      maturity_rating: volumeInfo.maturityRating
     }
   } catch (error) {
     console.error('Error fetching from Google Books by ISBN:', error)
@@ -117,6 +130,74 @@ async function getBookFromOpenLibraryByISBN(isbn: string): Promise<Partial<Book>
   } catch (error) {
     console.error('Error fetching from OpenLibrary by ISBN:', error)
     return null
+  }
+}
+
+// Enhanced Google Books search that returns full metadata including ratings
+export async function getEnhancedMetadataFromGoogle(title: string, author?: string, isbn?: string): Promise<Partial<Book>> {
+  try {
+    let searchQuery = `intitle:"${title}"`
+    if (author) {
+      searchQuery += ` inauthor:"${author}"`
+    }
+
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQuery)}&maxResults=1`
+    const response = await fetch(url)
+
+    if (!response.ok) return {}
+
+    const data = await response.json()
+    if (!data.items || data.items.length === 0) {
+      // Try with ISBN if available
+      if (isbn) {
+        const isbnUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`
+        const isbnResponse = await fetch(isbnUrl)
+        if (isbnResponse.ok) {
+          const isbnData = await isbnResponse.json()
+          if (isbnData.items && isbnData.items.length > 0) {
+            const volumeInfo: GoogleBooksVolumeInfo = isbnData.items[0].volumeInfo
+            return {
+              description: volumeInfo.description,
+              average_rating: volumeInfo.averageRating,
+              ratings_count: volumeInfo.ratingsCount,
+              page_count: volumeInfo.pageCount,
+              language: volumeInfo.language,
+              categories: volumeInfo.categories,
+              maturity_rating: volumeInfo.maturityRating,
+              cover_url: volumeInfo.imageLinks ? cleanGoogleBooksUrl(
+                volumeInfo.imageLinks?.extraLarge ||
+                volumeInfo.imageLinks?.large ||
+                volumeInfo.imageLinks?.medium ||
+                volumeInfo.imageLinks?.thumbnail ||
+                ''
+              ) : undefined
+            }
+          }
+        }
+      }
+      return {}
+    }
+
+    const volumeInfo: GoogleBooksVolumeInfo = data.items[0].volumeInfo
+    return {
+      description: volumeInfo.description,
+      average_rating: volumeInfo.averageRating,
+      ratings_count: volumeInfo.ratingsCount,
+      page_count: volumeInfo.pageCount,
+      language: volumeInfo.language,
+      categories: volumeInfo.categories,
+      maturity_rating: volumeInfo.maturityRating,
+      cover_url: volumeInfo.imageLinks ? cleanGoogleBooksUrl(
+        volumeInfo.imageLinks?.extraLarge ||
+        volumeInfo.imageLinks?.large ||
+        volumeInfo.imageLinks?.medium ||
+        volumeInfo.imageLinks?.thumbnail ||
+        ''
+      ) : undefined
+    }
+  } catch (error) {
+    console.error('Error getting enhanced metadata from Google Books:', error)
+    return {}
   }
 }
 
@@ -171,14 +252,29 @@ export async function enrichBookData(title: string, author?: string, publisher?:
          `${series} ${title}`) : title
       const coverUrl = await getBookCover(coverSearchTitle, author || book.author_name?.[0] || '', book.isbn?.[0])
 
+      // Get enhanced metadata from Google Books for fallback case
+      const enhancedMetadata = await getEnhancedMetadataFromGoogle(
+        coverSearchTitle,
+        author || book.author_name?.[0],
+        book.isbn?.[0]
+      )
+
       return {
-        cover_url: coverUrl || (book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg` : undefined),
+        cover_url: enhancedMetadata.cover_url || coverUrl || (book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg` : undefined),
         publication_year: book.first_publish_year,
         isbn: book.isbn?.[0],
         publisher: publisher || book.publisher?.[0],
         genre: book.subject?.[0],
         // Fill in missing author if found in search results
-        ...(author ? {} : { author: book.author_name?.[0] })
+        ...(author ? {} : { author: book.author_name?.[0] }),
+        // Enhanced metadata from Google Books
+        description: enhancedMetadata.description,
+        average_rating: enhancedMetadata.average_rating,
+        ratings_count: enhancedMetadata.ratings_count,
+        page_count: enhancedMetadata.page_count,
+        language: enhancedMetadata.language,
+        categories: enhancedMetadata.categories,
+        maturity_rating: enhancedMetadata.maturity_rating
       }
     }
 
@@ -194,14 +290,29 @@ export async function enrichBookData(title: string, author?: string, publisher?:
        `${series} ${title}`) : title
     const coverUrl = await getBookCover(coverSearchTitle, author || book.author_name?.[0] || '', book.isbn?.[0])
 
+    // Get enhanced metadata from Google Books
+    const enhancedMetadata = await getEnhancedMetadataFromGoogle(
+      coverSearchTitle,
+      author || book.author_name?.[0],
+      book.isbn?.[0]
+    )
+
     return {
-      cover_url: coverUrl || (book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg` : undefined),
+      cover_url: enhancedMetadata.cover_url || coverUrl || (book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg` : undefined),
       publication_year: book.first_publish_year,
       isbn: book.isbn?.[0],
       publisher: publisher || book.publisher?.[0],
       genre: book.subject?.[0],
       // Fill in missing author if found in search results
-      ...(author ? {} : { author: book.author_name?.[0] })
+      ...(author ? {} : { author: book.author_name?.[0] }),
+      // Enhanced metadata from Google Books
+      description: enhancedMetadata.description,
+      average_rating: enhancedMetadata.average_rating,
+      ratings_count: enhancedMetadata.ratings_count,
+      page_count: enhancedMetadata.page_count,
+      language: enhancedMetadata.language,
+      categories: enhancedMetadata.categories,
+      maturity_rating: enhancedMetadata.maturity_rating
     }
   } catch (error) {
     console.error('Error enriching book data:', error)

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import type { Book } from '@/types'
 import GeneratedBookCover from './GeneratedBookCover'
+import BookDetailModal from './BookDetailModal'
 
 interface BookCardProps {
   book: Book
@@ -12,6 +13,7 @@ interface BookCardProps {
 export default function BookCard({ book }: BookCardProps) {
   const [imageError, setImageError] = useState(false)
   const [imageLoading, setImageLoading] = useState(true)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const handleImageError = () => {
     setImageError(true)
@@ -23,10 +25,14 @@ export default function BookCard({ book }: BookCardProps) {
   }
 
   return (
-    <div className="group book-perspective">
-      {/* Book Cover with Realistic Effect */}
-      <div className="relative mb-6">
-        <div className="realistic-book-cover">
+    <>
+      <div
+        className="group book-perspective cursor-pointer hover:scale-105 transition-transform duration-200"
+        onClick={() => setIsModalOpen(true)}
+      >
+        {/* Book Cover with Realistic Effect */}
+        <div className="relative mb-6">
+          <div className="realistic-book-cover">
           {book.cover_url && !imageError ? (
             <>
               {imageLoading && (
@@ -67,6 +73,14 @@ export default function BookCard({ book }: BookCardProps) {
           }
         </p>
       </div>
-    </div>
+      </div>
+
+      {/* Modal */}
+      <BookDetailModal
+        book={book}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+    </>
   )
 }

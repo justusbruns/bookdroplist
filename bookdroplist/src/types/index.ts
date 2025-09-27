@@ -8,6 +8,13 @@ export interface Book {
   genre?: string
   description?: string
   publisher?: string
+  // Enhanced metadata
+  average_rating?: number
+  ratings_count?: number
+  page_count?: number
+  language?: string
+  categories?: string[]
+  maturity_rating?: string
 }
 
 export interface Location {
