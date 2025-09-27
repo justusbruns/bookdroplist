@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "src/app/api/process-image/route.ts": {
+      "maxDuration": 60
+    }
+  },
+  "api": {
+    "bodyParser": {
+      "sizeLimit": "4mb"
+    }
+  }
+}

@@ -10,10 +10,32 @@ interface ImageUploadProps {
 
 export default function ImageUpload({ onImageUpload }: ImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: any[]) => {
+    setError(null)
+
+    // Handle rejected files
+    if (rejectedFiles.length > 0) {
+      const rejection = rejectedFiles[0]
+      if (rejection.errors.some((e: any) => e.code === 'file-too-large')) {
+        setError('File size too large. Please upload an image smaller than 4MB.')
+        return
+      }
+      if (rejection.errors.some((e: any) => e.code === 'file-invalid-type')) {
+        setError('Invalid file type. Please upload a JPEG, PNG, or WebP image.')
+        return
+      }
+    }
+
     const file = acceptedFiles[0]
     if (file) {
+      // Double-check file size (4MB limit for Vercel)
+      if (file.size > 4 * 1024 * 1024) {
+        setError('File size too large. Please upload an image smaller than 4MB.')
+        return
+      }
+
       const previewUrl = URL.createObjectURL(file)
       setPreview(previewUrl)
       onImageUpload(file)
@@ -26,7 +48,8 @@ export default function ImageUpload({ onImageUpload }: ImageUploadProps) {
       'image/*': ['.jpeg', '.jpg', '.png', '.webp']
     },
     maxFiles: 1,
-    multiple: false
+    multiple: false,
+    maxSize: 4 * 1024 * 1024 // 4MB limit
   })
 
   return (
@@ -86,12 +109,18 @@ export default function ImageUpload({ onImageUpload }: ImageUploadProps) {
                 }
               </p>
               <p className="text-sm text-gray-500">
-                Supports JPEG, PNG, WebP (max 10MB)
+                Supports JPEG, PNG, WebP (max 4MB)
               </p>
             </div>
           </div>
         )}
       </div>
+
+      {error && (
+        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-700 text-sm">{error}</p>
+        </div>
+      )}
     </div>
   )
 }
