@@ -62,25 +62,38 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // If ISBN lookup didn't provide enough data, try traditional enrichment
-      if (!enrichedData.cover_url || !enrichedData.publisher) {
-        console.log('Enriching book data for:', finalTitle, finalAuthor || extractedBook.publisher)
+      // Only enrich if we're missing critical supplementary data (covers, etc.)
+      // Don't enrich if we already have good Gemini detection data
+      const needsEnrichment = !enrichedData.cover_url && !extractedBook.isbn
+
+      if (needsEnrichment) {
+        console.log('Enriching book data for cover/metadata:', finalTitle, finalAuthor || 'by ' + extractedBook.publisher)
         const additionalData = await enrichBookData(
           finalTitle,
           finalAuthor,
           extractedBook.publisher
         )
-        enrichedData = { ...additionalData, ...enrichedData } // ISBN data takes priority
+        // Only supplement missing fields, don't override Gemini data
+        enrichedData = {
+          cover_url: additionalData.cover_url,
+          publication_year: additionalData.publication_year,
+          description: additionalData.description,
+          genre: additionalData.genre,
+          ...enrichedData // ISBN data still takes priority
+        }
       }
 
       const book: Book = {
         id: uuidv4(),
         title: finalTitle,
-        author: finalAuthor || enrichedData.author || extractedBook.publisher || 'Unknown',
-        ...enrichedData,
-        // Preserve extracted data
-        ...(extractedBook.publisher ? { publisher: extractedBook.publisher } : {}),
-        ...(extractedBook.isbn ? { isbn: extractedBook.isbn } : {})
+        author: finalAuthor || enrichedData.author, // Don't use publisher as author fallback
+        publisher: extractedBook.publisher || enrichedData.publisher, // Preserve Gemini publisher
+        isbn: extractedBook.isbn || enrichedData.isbn, // Preserve Gemini ISBN
+        // Only add enriched data for fields not detected by Gemini
+        cover_url: enrichedData.cover_url,
+        publication_year: enrichedData.publication_year,
+        description: enrichedData.description,
+        genre: enrichedData.genre
       }
 
       console.log('Attempting to insert book:', book)
