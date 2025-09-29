@@ -63,10 +63,18 @@ export default function BookDetailPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Breadcrumbs */}
         <nav className="mb-8">
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <Link href={referrer} className="text-blue-600 hover:text-blue-700 transition-colors">
-              ← Back to list
+          <div className="flex items-center space-x-2 text-sm">
+            <Link
+              href={referrer}
+              className="flex items-center text-blue-600 hover:text-blue-700 transition-colors font-medium"
+            >
+              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to list
             </Link>
+            <span className="text-gray-400">/</span>
+            <span className="text-gray-600">Book Details</span>
           </div>
         </nav>
 
@@ -77,16 +85,16 @@ export default function BookDetailPage() {
           <div className="flex flex-col md:flex-row gap-8 md:gap-16">
 
             {/* Book Cover Section with 3D Effect */}
-            <div className="flex-shrink-0 w-full md:w-64 flex justify-center">
+            <div className="flex-shrink-0 w-full md:w-52 flex justify-center">
               <div className="relative transform-style-preserve-3d perspective-1000 group">
-                <div className="w-52 md:w-full h-auto rounded-xl shadow-xl object-cover transition-all duration-300 group-hover:shadow-2xl group-hover:scale-105">
+                <div className="w-52 h-auto rounded-xl shadow-xl object-cover transition-all duration-300 group-hover:shadow-2xl group-hover:scale-105">
                   {book.cover_url ? (
                     <Image
                       src={book.cover_url}
                       alt={`Cover of ${book.title}`}
-                      className="w-full h-auto rounded-xl shadow-xl object-cover"
-                      width={300}
-                      height={500}
+                      className="w-52 h-auto rounded-xl shadow-xl object-cover"
+                      width={200}
+                      height={300}
                       style={{ height: 'auto' }}
                       onError={(e) => {
                         e.currentTarget.style.display = 'none'
@@ -149,19 +157,7 @@ export default function BookDetailPage() {
               {hasDescription && (
                 <div className="mb-8">
                   <p className="text-lg text-gray-700 leading-relaxed">
-                    {book.description && book.description.length > 300 ? (
-                      <>
-                        {book.description.substring(0, 300)}...
-                        <details className="inline">
-                          <summary className="cursor-pointer text-blue-600 hover:text-blue-800 ml-1">
-                            Read more
-                          </summary>
-                          <span className="block mt-2">{book.description.substring(300)}</span>
-                        </details>
-                      </>
-                    ) : (
-                      book.description
-                    )}
+                    {book.description}
                   </p>
                 </div>
               )}
